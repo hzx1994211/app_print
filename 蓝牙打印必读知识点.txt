@@ -1,0 +1,91 @@
+必看知识点：
+蓝牙虽然再我们生活中运用的很广泛，但是在第一次做蓝牙编程开发的时候，有必要将蓝牙技术做一个简单的梳理。很多在介绍蓝牙技术的时候，介绍的非常复杂和详细，其实简单一句话，蓝牙就是一种短距离无线通讯技术。我们经常会使用到的http网络没有多大区别，无非就是通信协议和遵守的数据规范不一样而已！所以我们在做蓝牙编程的时候，可以类比http编程。套接字我们都很熟悉，在网络编程中，它是一个包装了网络实体对象的一个编程语言对象，在java或者c#等后端语言中，都有这个对象，拿到了这个对象后，我们就可以控制网络做数据通讯。那么在蓝牙编程中，同样有这样一个蓝牙套接字对象BluetoothAdapter。通过BluetoothAdapter我们传入各种蓝牙设备的mac地址就可以创建BluetoothSocket对象，有了BluetoothSocket我们就可以操作对应的蓝牙设备了，所以大家记住它，它非常重要。
+
+列举一下蓝牙的版本：
+蓝牙1.0：传输速率约1M/s。
+蓝牙2.0+EDR：传输速率约2-3M/s，其中2.1+EDR是最经典的蓝牙，最大的特点是安全简易配对。
+蓝牙3.0+HS（高传输蓝牙）：高传输24M/s，只有标注了"+HS"商标的设备才是真正支持802.11高速数据传输。
+蓝牙4.0（低功耗蓝牙）：它包括经典蓝牙、高速蓝牙和蓝牙低功耗协议，在3.0基础上功耗更低，主要面向对功耗需求极低、用纽扣电池供电的应用。
+蓝牙5.0：4 倍通讯距离，2 倍传输速度，8 倍广播资料传输量
+
+为什么要列举市面上的蓝牙版本，因为在我们日常的小型无线蓝牙打印机设备中，绝大多数都是都是蓝牙3.0，记住是90%以上，我查阅过大量的蓝牙打印机，如果在设备参数上没写蓝牙版本的默认就是蓝牙3.0。（这里小小吐槽一下，我们的手机，蓝牙耳机等产品绝大多数都已经升级到4.0和5.0了）。由于这个打印机本身蓝牙版本的限制，uniapp官方文档上介绍的关于蓝牙连接那一章的api方法我们就很难有机会用到。
+
+有了以上知识点，我们就该知道面临如下选择：
+1、放弃uniapp使用原生的安卓或者ios来开发app程序
+2、利用uniapp对native的支持，间接的调用原生安卓包（听到了这里，千万不要担心，native很简单，我下面会贴出全部的调用代码
+）
+
+我们既然选择了uniapp就要一直走到底，现在我还要再补充一个重要的知识点，蓝牙指令集，很多类似的文章并没有很系统的讲这些，生搬硬套的时候导致大家在会遇到很多问题。例如，按着教程写的代码，发送打印命令后，打印机没有任何反应，或者出现乱码。
+
+所谓蓝牙打印机指令集，简单说就是打印机可以识别的指令代码，指令集大致分为三类，实际上就是三大打印机巨头各自制定的指令规则
+1、Epson公司的ESC
+2、HP公司的CPCL
+3、Adobe公司的TSPL
+市面上的蓝牙打印机都是集成了上面3中指令集中的一种或者多种
+
+大家现在知道为什么你copy的代码无法成功打印了吗？所以你必须要清楚的知道你的打印机和你发给它的指令集是否一致，很多文章上来就码出代码，根本不说清楚原理，就会出现上面所说的各种问题。所以一定要确认好自己的打印机参数信息，然后在编程的时候选择合适的指令集。
+这里再说几个坑
+1、指令集也有版本，例如你的蓝牙打印机支持ESC指令集，但是指令集本身也有版本，所以建议选择新款机型，防止指令集版本不兼容
+2、一次不要发送太多的指令集，一些打印机会出现内存溢出的现象
+3、买之前可以通过厂家电话，确认一下参数信息，因为即使参数写明了，也可能出现不一致的情况，所有尽量也要选大厂家
+
+关于知识原理的介绍到此为止，相信大家已经跃跃欲试了！
+hold on！我还要插一句题外话，这个是帮我们减少代码量的，一些demo文章关于蓝牙打印的代码很长，因为它包含了整套的流程，包括蓝牙设备的搜索、连接等，实际上我要说的是，完全没有必要。
+蓝牙搜索和连接是操作系统本身就自带的功能，这一步的操作我们完全可以省下来，难不成我们自己写的代码比操作系统本身自带的功能还要稳定？操作系统提供一个获取已经连接的设备列表接口，我们通过这个接口可以得到保存在系统本身的蓝牙设备信息，包括蓝牙设备的mac地址，我们要的就是这个mac地址，因为通过它我们就可以实例化一个套接字蓝牙对象。
+
+所以，我们只需要有下面两个代码片段，就可以实现打印
+1、进入页面时，获取已经连接上的蓝牙设备列表
+			initPrinter: function() {
+				var that = this;
+				that.deviceList = [];
+				var main = plus.android.runtimeMainActivity();
+				var Context = plus.android.importClass("android.content.Context");
+				var BManager = main.getSystemService(Context.BLUETOOTH_SERVICE);
+				plus.android.importClass(BManager); //引入相关的method函数
+				var BAdapter = BManager.getAdapter();
+				plus.android.importClass(BAdapter); //引入相关的method函数，这样之后才会有isEna
+				var lists = BAdapter.getBondedDevices();
+				plus.android.importClass(lists);
+				var iterator = lists.iterator();
+				plus.android.importClass(iterator);
+				while (iterator.hasNext()) {
+					var d = iterator.next();
+					plus.android.importClass(d);
+					var temp = {
+						name: d.getName(),
+						address: d.getAddress(),
+						status: d.getBondState(),
+						uuids: d.getUuids(),
+						op: d
+					};
+					that.deviceList.push(temp);
+				}
+			},
+2、实例化设备对象，控制设备进行打印
+				var that = this;
+				var main = plus.android.runtimeMainActivity();
+				var BluetoothAdapter = plus.android.importClass("android.bluetooth.BluetoothAdapter");
+				var UUID = plus.android.importClass("java.util.UUID");
+				var uuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+				var BAdapter = BluetoothAdapter.getDefaultAdapter();
+				var device = BAdapter.getRemoteDevice(that.device.address);
+				plus.android.importClass(device);
+				var bluetoothSocket = device.createInsecureRfcommSocketToServiceRecord(uuid);
+				plus.android.importClass(bluetoothSocket);
+				if (!bluetoothSocket.isConnected()) {
+					bluetoothSocket.connect();
+					if (bluetoothSocket.isConnected()) {
+						console.log('设备已连接,开始发送打印文件');
+						var outputStream = bluetoothSocket.getOutputStream();
+						plus.android.importClass(outputStream);
+						var arrayBuffer = plus.android.invoke("打印指令集", 'getBytes', 'gbk');
+				                outputStream.write(arrayBuffer);
+				                outputStream.flush();
+						bluetoothSocket.close();
+						if (!bluetoothSocket.isConnected()) {
+							console.log('设备已关闭');
+						}
+					} else {
+						console.log('设备连接失败');
+					}
+				}
