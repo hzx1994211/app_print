@@ -8,9 +8,11 @@
 			<view style="width: 30rpx;">{{index+1}}</view>
 			<view style="width: 180rpx;">{{device.name}}</view>
 			<view style="width: 310rpx;">{{device.address}}</view>
+      <!--  -->
 			<view class="flex-item"><button type="primary" plain size="mini" @click="printSomething(device,printTest)">连接蓝牙</button></view>
 		</view>
-    <view @click="printTest(outputStream)">打印</view>
+    <view @click="printTest(outputStream)" style="margin-top:20px">打印</view>
+    <view @click="add" style="margin-top:20px">测试蓝牙</view>
 	</view>
 	
 </template>
@@ -34,6 +36,12 @@
 			// #endif
 		},
 		methods: {
+      add() {
+        console.log('------');
+        uni.navigateTo({
+          url: '../add/index'
+        });
+      },
       startSearch() {
         this.initPrinter();
       },
@@ -98,6 +106,10 @@
 						// sb(this.outputStream);
             // 关闭蓝牙连接
 						// this.bluetoothSocket.close();
+            uni.showToast({
+						    title: '设备连接成功',
+						    duration: 2000
+						});
 						if (!this.bluetoothSocket.isConnected()) {
 							console.log("设备已关闭");
 						}
@@ -178,8 +190,16 @@
         text += "CENTER\r\n"
         text += "BACKGROUND 110\r\n"
         text += "SETMAG 2 2\r\n"
-        text += "BKT 24 0 10 40 已验收\r\n"
+        text += "BKT 24 0 200 560 已验收\r\n"
         text += "BACKGROUND 0\r\n"
+
+        // 反白线段
+        text += "CENTER\r\n"
+        /**
+         * 反白线段注意 =>TL:IL 200（x0始点） 600（y0竖起点） 350（x1终点） 600（y1竖终点） 45（线宽）\r\n
+         */ 
+        text += "T 3 0 160 600 SAVE\r\n"
+        text += 'IL 200 600 350 600 45\r\n'
 
 				// text += "END\r\n";
 				text += "PRINT\r\n"
