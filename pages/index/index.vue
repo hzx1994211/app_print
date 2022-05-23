@@ -8,8 +8,9 @@
 			<view style="width: 30rpx;">{{index+1}}</view>
 			<view style="width: 180rpx;">{{device.name}}</view>
 			<view style="width: 310rpx;">{{device.address}}</view>
-			<view class="flex-item"><button type="primary" plain size="mini" @click="printSomething(device,printTest)">打印测试</button></view>
+			<view class="flex-item"><button type="primary" plain size="mini" @click="printSomething(device,printTest)">连接蓝牙</button></view>
 		</view>
+    <view @click="printTest(outputStream)">打印</view>
 	</view>
 	
 </template>
@@ -21,7 +22,9 @@
 				show: {
 					setting: false
 				},
-				deviceList: []
+				deviceList: [],
+        outputStream:null,
+        bluetoothSocket:null
 			}
 		},
 		onLoad(p) {
@@ -43,6 +46,7 @@
 					}
 				}
 			},
+      //搜索蓝牙
 			initPrinter: function() {
 				var that = this;
 				that.deviceList = [];
@@ -72,27 +76,29 @@
 			printSomething: function(dev,sb) {
 				var that = this;
 				var main = plus.android.runtimeMainActivity();
+        //蓝牙适配器
 				var BluetoothAdapter = plus.android.importClass("android.bluetooth.BluetoothAdapter");
 				var UUID = plus.android.importClass("java.util.UUID");
 				var uuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-				var BAdapter = BluetoothAdapter.getDefaultAdapter(); //开启蓝牙
+        //蓝牙本地适配器
+				var BAdapter = BluetoothAdapter.getDefaultAdapter();
         console.log(dev,'----');
 				var device = BAdapter.getRemoteDevice(dev.address);
 				plus.android.importClass(device);
         //蓝牙连接
-				var bluetoothSocket = device.createInsecureRfcommSocketToServiceRecord(uuid);
-				plus.android.importClass(bluetoothSocket);
+				this.bluetoothSocket = device.createInsecureRfcommSocketToServiceRecord(uuid);
+				plus.android.importClass(this.bluetoothSocket);
 				console.log("开始连接打印机:"+dev.name);
-				if (!bluetoothSocket.isConnected()) {
-					bluetoothSocket.connect();
-					if (bluetoothSocket.isConnected()) {
+				if (!this.bluetoothSocket.isConnected()) {
+					this.bluetoothSocket.connect();
+					if (this.bluetoothSocket.isConnected()) {
 						console.log("设备已连接,开始发送打印文件");
-						var outputStream = bluetoothSocket.getOutputStream();
-						plus.android.importClass(outputStream);
-						sb(outputStream);
+						this.outputStream = this.bluetoothSocket.getOutputStream();
+						plus.android.importClass(this.outputStream);
+						// sb(this.outputStream);
             // 关闭蓝牙连接
-						bluetoothSocket.close();
-						if (!bluetoothSocket.isConnected()) {
+						// this.bluetoothSocket.close();
+						if (!this.bluetoothSocket.isConnected()) {
 							console.log("设备已关闭");
 						}
 					} else {
@@ -168,6 +174,13 @@
 				text += "MA,QR MMM={'k1':'023WA','k2':'023CA','k3':'005','k4':'T4','k5':'SF7444435088888','k6':'','k7':'51ba5363'}\r\n";
 				text += "ENDQR\r\n";
         
+        // 打印水印
+        text += "CENTER\r\n"
+        text += "BACKGROUND 110\r\n"
+        text += "SETMAG 2 2\r\n"
+        text += "BKT 24 0 10 40 已验收\r\n"
+        text += "BACKGROUND 0\r\n"
+
 				// text += "END\r\n";
 				text += "PRINT\r\n"
 				console.log(text)

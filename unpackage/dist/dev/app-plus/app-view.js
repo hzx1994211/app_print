@@ -295,7 +295,7 @@ var render = function() {
                       }
                     }
                   },
-                  [_vm._v("打印测试")]
+                  [_vm._v("连接蓝牙")]
                 )
               ],
               1
@@ -303,7 +303,19 @@ var render = function() {
           ],
           1
         )
-      })
+      }),
+      _c(
+        "v-uni-view",
+        {
+          attrs: { _i: 9 },
+          on: {
+            click: function($event) {
+              return _vm.$handleViewEvent($event)
+            }
+          }
+        },
+        [_vm._v("打印")]
+      )
     ],
     2
   )
