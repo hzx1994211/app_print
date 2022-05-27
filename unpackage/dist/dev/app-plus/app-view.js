@@ -242,7 +242,7 @@ var render = function() {
             }
           }
         },
-        [_vm._v("搜索蓝牙")]
+        [_vm._v("获取已配对蓝牙")]
       ),
       _vm._l(_vm._$g(3, "f"), function(device, index, $20, $30) {
         return _c(
@@ -317,19 +317,6 @@ var render = function() {
           }
         },
         [_vm._v("打印")]
-      ),
-      _c(
-        "v-uni-view",
-        {
-          staticStyle: { "margin-top": "20px" },
-          attrs: { _i: 10 },
-          on: {
-            click: function($event) {
-              return _vm.$handleViewEvent($event)
-            }
-          }
-        },
-        [_vm._v("测试蓝牙")]
       )
     ],
     2
